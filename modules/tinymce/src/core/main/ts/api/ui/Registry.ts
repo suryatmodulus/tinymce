@@ -97,6 +97,9 @@ const registry = () => {
      */
     addContextToolbar: bridge.addContextToolbar,
 
+    // TODO:
+    addContextToolbarGroup: bridge.addContextToolbarGroup,
+
     /**
      * Registers a new SVG icon, the icon name reference can be configured by any
      * TinyMCE 5 Ui components that can display an icon. The icon is only available

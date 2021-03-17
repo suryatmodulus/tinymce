@@ -1,6 +1,7 @@
 import { AutocompleterSpec } from '../components/content/Autocompleter';
 import { ContextFormSpec } from '../components/content/ContextForm';
 import { ContextToolbarSpec } from '../components/content/ContextToolbar';
+import { ContextToolbarGroupSpec } from '../components/content/ContextToolbarGroup';
 import { ContextMenuApi } from '../components/menu/ContextMenu';
 import { MenuItemSpec } from '../components/menu/MenuItem';
 import { NestedMenuItemSpec } from '../components/menu/NestedMenuItem';
@@ -26,6 +27,7 @@ export interface Registry {
   addToggleMenuItem: (name: string, spec: ToggleMenuItemSpec) => void;
   addContextMenu: (name: string, spec: ContextMenuApi) => void;
   addContextToolbar: (name: string, spec: ContextToolbarSpec) => void;
+  addContextToolbarGroup: (name: string, spec: ContextToolbarGroupSpec) => void;
   addContextForm: (name: string, spec: ContextFormSpec) => void;
   addIcon: (name: string, svgData: string) => void;
   addAutocompleter: (name: string, spec: AutocompleterSpec) => void;
@@ -65,6 +67,7 @@ export const create = (): Registry => {
     addAutocompleter: add(popups, 'autocompleter'),
     addContextMenu: add(contextMenus, 'contextmenu'),
     addContextToolbar: add(contextToolbars, 'contexttoolbar'),
+    addContextToolbarGroup: add(contextToolbars, 'contexttoolbargroup'),
     addContextForm: add(contextToolbars, 'contextform'),
     addSidebar: add(sidebars, 'sidebar'),
     addIcon,

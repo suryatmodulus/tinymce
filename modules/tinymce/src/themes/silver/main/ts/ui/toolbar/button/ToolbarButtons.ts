@@ -105,7 +105,11 @@ const renderCommonStructure = (
   return {
     dom: {
       tag: 'button',
-      classes: [ ToolbarButtonClasses.Button ].concat(text.isSome() ? [ ToolbarButtonClasses.MatchWidth ] : []).concat(needsRtlClass ? [ ToolbarButtonClasses.IconRtl ] : []),
+      classes: [ ToolbarButtonClasses.Button ]
+        .concat(text.isSome() ? [ ToolbarButtonClasses.MatchWidth ] : [])
+        .concat(needsRtlClass ? [ ToolbarButtonClasses.IconRtl ] : []),
+      // .concat(classes),
+      // .concat([ ToolbarButtonClasses.ButtonReturn ]), // TODO:
       attributes: getTooltipAttributes(tooltip, providersBackstage)
     },
     components: componentRenderPipeline([

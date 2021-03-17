@@ -7,6 +7,7 @@
 
 export const enum ToolbarButtonClasses {
   Button = 'tox-tbtn',
+  ButtonReturn = 'tox-tbtn--return',
   IconWrap = 'tox-tbtn__icon-wrap',
   Icon = 'tox-icon',
   Ticked = 'tox-tbtn--enabled',

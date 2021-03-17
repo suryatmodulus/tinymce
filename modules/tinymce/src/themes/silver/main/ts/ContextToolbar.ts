@@ -22,13 +22,14 @@ import { ContextForm } from './ui/context/ContextForm';
 import { getContextToolbarBounds } from './ui/context/ContextToolbarBounds';
 import * as ToolbarLookup from './ui/context/ContextToolbarLookup';
 import * as ToolbarScopes from './ui/context/ContextToolbarScopes';
-import { forwardSlideEvent, renderContextToolbar } from './ui/context/ContextUi';
-import { renderToolbar } from './ui/toolbar/CommonToolbar';
+import { backSlideEvent, forwardSlideEvent, renderContextToolbar } from './ui/context/ContextUi';
+import { renderToolbarButton } from './ui/toolbar/button/ToolbarButtons';
+import { renderToolbar, ToolbarGroup } from './ui/toolbar/CommonToolbar';
 import { identifyButtons } from './ui/toolbar/Integration';
 
 type ScopedToolbars = ToolbarScopes.ScopedToolbars;
 
-export type ContextTypes = InlineContent.ContextToolbar | InlineContent.ContextForm;
+export type ContextTypes = InlineContent.ContextToolbar | InlineContent.ContextForm | InlineContent.ContextToolbarGroup;
 
 interface Extras {
   backstage: UiFactoryBackstage;
@@ -193,7 +194,7 @@ const register = (editor: Editor, registryContextToolbars, sink: AlloyComponent,
 
   type ContextToolbarButtonTypes = Toolbar.ToolbarButtonSpec | Toolbar.ToolbarMenuButtonSpec | Toolbar.ToolbarSplitButtonSpec | Toolbar.ToolbarToggleButtonSpec | Toolbar.GroupToolbarButtonSpec;
 
-  const buildContextToolbarGroups = (allButtons: Record<string, ContextToolbarButtonTypes>, ctx: InlineContent.ContextToolbar) =>
+  const buildContextToolbarGroups = (allButtons: Record<string, ContextToolbarButtonTypes>, ctx: InlineContent.ContextToolbar | InlineContent.ContextToolbarGroup) =>
     identifyButtons(editor, { buttons: allButtons, toolbar: ctx.items, allowToolbarGroups: false }, extras, Optional.some([ 'form:' ]));
 
   const buildContextMenuGroups = (ctx: InlineContent.ContextForm, providers: UiFactoryBackstageProviders) => ContextForm.buildInitGroups(ctx, providers);
@@ -201,20 +202,70 @@ const register = (editor: Editor, registryContextToolbars, sink: AlloyComponent,
   const buildToolbar = (toolbars: Array<ContextTypes>): AlloySpec => {
     const { buttons } = editor.ui.registry.getAll();
     const scopes = getScopes();
-    const allButtons: Record<string, ContextToolbarButtonTypes> = { ...buttons, ...scopes.formNavigators };
+    const allButtons: Record<string, ContextToolbarButtonTypes> = { ...buttons, ...scopes.formNavigators, ...scopes.groupNavigators };
 
     // For context toolbars we don't want to use floating or sliding, so just restrict this
     // to scrolling or wrapping (default)
     const toolbarType = getToolbarMode(editor) === ToolbarMode.scrolling ? ToolbarMode.scrolling : ToolbarMode.default;
+    const initGroups = Arr.flatten(Arr.map(toolbars, (ctx) => {
+      switch (ctx.type) {
+        case 'contexttoolbar':
+          return buildContextToolbarGroups(allButtons, ctx);
+        case 'contextform':
+          return buildContextMenuGroups(ctx, extras.backstage.shared.providers);
+        case 'contexttoolbargroup':
+          return [
+            // ...identifyButtons(editor, { buttons: allButtons, toolbar: 'bold |', allowToolbarGroups: false }, extras, Optional.some([ 'form:' ])),
+            // renderToolbarGroup({
+            //   title: Optional.none(),
+            //   items: [
 
-    const initGroups = Arr.flatten(Arr.map(toolbars, (ctx) =>
-      ctx.type === 'contexttoolbar' ? buildContextToolbarGroups(allButtons, ctx) : buildContextMenuGroups(ctx, extras.backstage.shared.providers)
-    ));
+            //   ]
+            // }),
+            {
+              title: Optional.none(),
+              items: [
+                renderToolbarButton(
+                  {
+                    type: 'button',
+                    onAction: () => {
+                      const scopes = getScopes();
+                      // This only allows for one level of nesting, but at the same time this is the
+                      // case for toolbar groups atm.
+                      ToolbarLookup.lookup(scopes, editor).fold(
+                        close,
+                        (info) => {
+                          const alloySpec = buildToolbar(info.toolbars);
+                          AlloyTriggers.emitWith(contextbar, backSlideEvent, {
+                            forwardContents: wrapInPopDialog(alloySpec)
+                          });
+                        }
+                      );
 
+                      // const alloySpec = buildToolbar(toolbars); // TODO: should be the previous toolbar(s)... how?
+                      // AlloyTriggers.emitWith(contextbar, backSlideEvent, {
+                      //   forwardContents: wrapInPopDialog(alloySpec)
+                      // });
+                    },
+                    disabled: false,
+                    tooltip: Optional.some(''),
+                    icon: Optional.some('chevron-left'),
+                    text: Optional.none(),
+                    onSetup: () => Fun.noop
+                  },
+                  extras.backstage.shared.providers
+                )
+              ]
+            } as ToolbarGroup,
+            ...buildContextToolbarGroups(allButtons, ctx)
+          ];
+      }
+    }));
+    // debugger;
     return renderToolbar({
       type: toolbarType,
       uid: Id.generate('context-toolbar'),
-      initGroups,
+      initGroups, // TODO: does this mean that multiple contexttoolbars are combined?
       onEscape: Optional.none,
       cyclicKeying: true,
       providers: extras.backstage.shared.providers
@@ -270,7 +321,7 @@ const register = (editor: Editor, registryContextToolbars, sink: AlloyComponent,
 
   const launchContextToolbar = () => {
     // Don't launch if the editor doesn't have focus
-    if (!editor.hasFocus()) {
+    if (!editor.hasFocus()) { // TODO:
       return;
     }
 

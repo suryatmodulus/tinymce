@@ -165,6 +165,36 @@ const addButtons = (editor: Editor, selectionTargets: SelectionTargets, clipboar
     icon: 'table'
   });
 
+  // TODO: how to support splittoolbarbutton etc?
+  editor.ui.registry.addContextToolbarGroup('quicktablecell', {
+    items: 'tablemergecells tablesplitcells | tablecellprops', // TODO: Add new buttons
+    icon: 'table-cell',
+    // TODO: this actually probably need to use the predicate things and stuff from the parent
+    // context toolbar since actions form the toolbar group may change the editor content, hence resulting
+    // in a need to refresh / see if the context toolbar still can show.
+    // launch: {
+    //   type: 'contextformtogglebutton',
+
+    // },
+    // commands: [
+    //   {
+    //     type: 'contextformbutton',
+    //     icon: 'unlink',
+    //     tooltip: 'Remove link',
+    //     onAction: (formApi) => {}
+    //   },
+    // ]
+  });
+
+  editor.ui.registry.addContextToolbarGroup('quicktablerow', {
+    items: 'tableinsertrowbefore tableinsertrowafter | advtablesort tablecopyrow | tablerowprops tabledeleterow', // TODO: Add new buttons
+    icon: 'table-row',
+  });
+
+  editor.ui.registry.addContextToolbarGroup('quicktablecol', {
+    items: 'tableinsertcolbefore tableinsertcolafter | advtablesort tablecopycol | tablecolprops tabledeletecol', // TODO: Add new buttons
+    icon: 'table-column',
+  });
 };
 
 const addToolbars = (editor: Editor) => {
